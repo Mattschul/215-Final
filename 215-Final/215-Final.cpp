@@ -17,15 +17,19 @@ void LoadTex(Texture& tex, string filename) {
 	}
 }
 
-void MovePaddle(PhysicsSprite & paddle, int elapsedMS) {
+void MovePaddle(PhysicsSprite & paddle, unsigned int elapsedMS) {
 	if (Keyboard::isKeyPressed(Keyboard::Right)) {
 		Vector2f newPos(paddle.getCenter());
 		newPos.x = newPos.x + (KB_SPEED * elapsedMS);
+		//constrain y movement
+		newPos.y = 393; 
 		paddle.setCenter(newPos);
 	}
 	if (Keyboard::isKeyPressed(Keyboard::Left)) {
 		Vector2f newPos(paddle.getCenter());
 		newPos.x = newPos.x - (KB_SPEED * elapsedMS);
+		//constrain y movement
+		newPos.y = 393;
 		paddle.setCenter(newPos);
 	}
 }
@@ -40,7 +44,7 @@ int main()
 	PhysicsCircle ball;
 	ball.setCenter(Vector2f(200, 300));
 	ball.setRadius(10);
-	ball.applyImpulse(Vector2f(0.1, 0.4));
+	ball.applyImpulse(Vector2f(0.1, -0.4));
 	world.AddPhysicsBody(ball);
 
 	/*Create the floor
@@ -81,12 +85,13 @@ int main()
 	//create paddle
 	PhysicsSprite& paddle = *new PhysicsSprite();
 	Texture paddleTex;
+	paddle.setStatic(true);
 	LoadTex(paddleTex, "images/paddle.png");
 	paddle.setTexture(paddleTex);
 	Vector2f sz = paddle.getSize();
 	paddle.setCenter(Vector2f(400,
 		400 - (sz.y / 2)));
-
+	world.AddPhysicsBody(paddle);
 	
 
 	
@@ -99,19 +104,18 @@ int main()
 		currentTime = clock.getElapsedTime();
 		Time deltaTime = (currentTime - lastTime);
 		long deltaTimeMS = deltaTime.asMilliseconds();
-		if (deltaTimeMS > 10) {
+		if (deltaTimeMS > 0.2) {
 			lastTime = currentTime;
 			world.UpdatePhysics(deltaTimeMS);
 			MovePaddle(paddle, deltaTimeMS);
-
-			window.clear();
-			window.draw(paddle);
-			window.draw(ball);
-			window.draw(rightwall);
-			window.draw(leftwall);
-			window.draw(ceiling);
-			window.display();
 		}
+		window.clear();
+		window.draw(paddle);
+		window.draw(ball);
+		window.draw(rightwall);
+		window.draw(leftwall);
+		window.draw(ceiling);
+		window.display();
 		}
 		
 }
