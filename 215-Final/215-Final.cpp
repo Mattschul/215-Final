@@ -10,26 +10,28 @@ using namespace std;
 using namespace sf;
 using namespace sfp;
 
-const float KB_SPEED = 0.2;
+const float KB_SPEED = 0.4;
 void LoadTex(Texture& tex, string filename) {
 	if (!tex.loadFromFile(filename)) {
 		cout << "Could not load" << filename << endl;
 	}
 }
 
+
+
 void MovePaddle(PhysicsSprite & paddle, unsigned int elapsedMS) {
 	if (Keyboard::isKeyPressed(Keyboard::Right)) {
 		Vector2f newPos(paddle.getCenter());
 		newPos.x = newPos.x + (KB_SPEED * elapsedMS);
 		//constrain y movement
-		newPos.y = 393; 
+		newPos.y = 500; 
 		paddle.setCenter(newPos);
 	}
 	if (Keyboard::isKeyPressed(Keyboard::Left)) {
 		Vector2f newPos(paddle.getCenter());
 		newPos.x = newPos.x - (KB_SPEED * elapsedMS);
 		//constrain y movement
-		newPos.y = 393;
+		newPos.y = 500;
 		paddle.setCenter(newPos);
 	}
 }
@@ -39,20 +41,28 @@ int main()
 	// Create our window and world with gravity 0
 	RenderWindow window(VideoMode(800, 600), "Breakout");
 	World world(Vector2f(0,0));
+	int score = 0;
+	Font fnt;
+	if (!fnt.loadFromFile("arial.ttf")) {
+		cout << "Couldnt load arial.ttf" << endl;
+		exit(1);
+	}
 
 	// Create the ball
 	PhysicsCircle ball;
 	ball.setCenter(Vector2f(200, 300));
 	ball.setRadius(10);
-	ball.applyImpulse(Vector2f(0.1, -0.4));
+	float xSpeed = 0.1;
+	float ySpeed = -0.4;
+	ball.applyImpulse(Vector2f(xSpeed, ySpeed));
 	world.AddPhysicsBody(ball);
 
-	/*Create the floor
+	//Create the floor
 	PhysicsRectangle floor;
 	floor.setSize(Vector2f(760, 20));
 	floor.setCenter(Vector2f(400, 590));
 	floor.setStatic(true);
-	world.AddPhysicsBody(floor);*/
+	world.AddPhysicsBody(floor);
 
 	//Create a wall
 	PhysicsRectangle rightwall;
@@ -75,13 +85,6 @@ int main()
 	ceiling.setStatic(true);
 	world.AddPhysicsBody(ceiling);
 
-	/*//Create a center block
-	PhysicsRectangle block;
-	block.setSize(Vector2f(50, 50));
-	block.setCenter(Vector2f(400, 300));
-	block.setStatic(true);
-	world.AddPhysicsBody(block);*/
-
 	//create paddle
 	PhysicsSprite& paddle = *new PhysicsSprite();
 	Texture paddleTex;
@@ -89,28 +92,73 @@ int main()
 	LoadTex(paddleTex, "images/paddle.png");
 	paddle.setTexture(paddleTex);
 	Vector2f sz = paddle.getSize();
-	paddle.setCenter(Vector2f(400,
-		400 - (sz.y / 2)));
+	paddle.setCenter(Vector2f(400,500));
 	world.AddPhysicsBody(paddle);
-	
+	paddle.onCollision =
+		[&ball, &xSpeed, &ySpeed, &paddle]
+		(PhysicsBodyCollisionResult result) {
+		if (result.object2 == ball) {
+			cout << "boom" << endl;
+			//ensure ball keeps moving
+			ball.setVelocity(Vector2f((ySpeed += 0.01), (xSpeed + 0.0001)));
+		}
+		};
+
+	Texture redTex;
+	LoadTex(redTex, "images/block.png");
+	PhysicsShapeList<PhysicsSprite> blocks;
+	for (int i(0); i < 15; i++) {
+		PhysicsSprite& block = blocks.Create();
+		block.setTexture(redTex);
+		int x = 50 + ((700 / 15) * i);
+		Vector2f sz = block.getSize();
+		block.setCenter(Vector2f(x, 50 + (sz.y / 2)));
+		block.setVelocity(Vector2f(0, 0));
+		world.AddPhysicsBody(block);
+		block.onCollision =
+			[&world, &ball, &block, &blocks, &xSpeed, &ySpeed, &score]
+			(PhysicsBodyCollisionResult result) {
+			if (result.object2 == ball) {
+				//___Sound.play();
+				cout << "e" << endl;
+				ball.setVelocity(Vector2f((ySpeed += 0.1), (xSpeed + 0.1)));
+				world.RemovePhysicsBody(block);
+				blocks.QueueRemove(block);
+				score += 10;
+			}
+			};
+	}
 
 	
 	Clock clock;
 	Time lastTime(clock.getElapsedTime());
 	Time currentTime(lastTime);
 
+
 	while (true) {
 		// calculate MS since last frame
 		currentTime = clock.getElapsedTime();
 		Time deltaTime = (currentTime - lastTime);
 		long deltaTimeMS = deltaTime.asMilliseconds();
-		if (deltaTimeMS > 0.2) {
+		if (deltaTimeMS > 0.1) {
 			lastTime = currentTime;
 			world.UpdatePhysics(deltaTimeMS);
 			MovePaddle(paddle, deltaTimeMS);
 		}
+		
+		
 		window.clear();
+		blocks.DoRemovals();
+		for (PhysicsShape& block : blocks) {
+			window.draw((PhysicsSprite&)block);
+		}
+
 		window.draw(paddle);
+		Text scoreText;
+		scoreText.setString(to_string(score));
+		scoreText.setFont(fnt);
+		scoreText.setPosition(30, 50);
+		window.draw(scoreText);
 		window.draw(ball);
 		window.draw(rightwall);
 		window.draw(leftwall);
