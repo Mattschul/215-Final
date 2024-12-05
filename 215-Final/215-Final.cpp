@@ -10,7 +10,7 @@ using namespace std;
 using namespace sf;
 using namespace sfp;
 
-const float KB_SPEED = 0.4;
+const float KB_SPEED = 0.6;
 void LoadTex(Texture& tex, string filename) {
 	if (!tex.loadFromFile(filename)) {
 		cout << "Could not load" << filename << endl;
@@ -52,17 +52,17 @@ int main()
 	PhysicsCircle ball;
 	ball.setCenter(Vector2f(200, 300));
 	ball.setRadius(10);
-	float xSpeed = 0.1;
-	float ySpeed = -0.4;
+	float xSpeed = 0.2;
+	float ySpeed = -0.2;
 	ball.applyImpulse(Vector2f(xSpeed, ySpeed));
 	world.AddPhysicsBody(ball);
 
 	//Create the floor
-	PhysicsRectangle floor;
+	/**PhysicsRectangle floor;
 	floor.setSize(Vector2f(760, 20));
 	floor.setCenter(Vector2f(400, 590));
 	floor.setStatic(true);
-	world.AddPhysicsBody(floor);
+	world.AddPhysicsBody(floor);**/
 
 	//Create a wall
 	PhysicsRectangle rightwall;
@@ -98,36 +98,88 @@ int main()
 		[&ball, &xSpeed, &ySpeed, &paddle]
 		(PhysicsBodyCollisionResult result) {
 		if (result.object2 == ball) {
-			cout << "boom" << endl;
+			cout << "paddle" << endl;
 			//ensure ball keeps moving
-			ball.setVelocity(Vector2f((ySpeed += 0.01), (xSpeed + 0.0001)));
+			//ball.setVelocity(Vector2f((ySpeed += 0.01), (xSpeed += 0.01)));
 		}
 		};
 
-	Texture redTex;
-	LoadTex(redTex, "images/block.png");
+	Texture blockTex;
+	LoadTex(blockTex, "images/block.png");
 	PhysicsShapeList<PhysicsSprite> blocks;
+
+	//Make 3 rows of blocks
 	for (int i(0); i < 15; i++) {
 		PhysicsSprite& block = blocks.Create();
-		block.setTexture(redTex);
+		block.setTexture(blockTex);
 		int x = 50 + ((700 / 15) * i);
 		Vector2f sz = block.getSize();
 		block.setCenter(Vector2f(x, 50 + (sz.y / 2)));
 		block.setVelocity(Vector2f(0, 0));
 		world.AddPhysicsBody(block);
+		block.setStatic(true);
 		block.onCollision =
 			[&world, &ball, &block, &blocks, &xSpeed, &ySpeed, &score]
 			(PhysicsBodyCollisionResult result) {
 			if (result.object2 == ball) {
 				//___Sound.play();
-				cout << "e" << endl;
-				ball.setVelocity(Vector2f((ySpeed += 0.1), (xSpeed + 0.1)));
+				cout << "block1" << endl;
+				//ball.applyImpulse(Vector2f((ySpeed += 0.001), (xSpeed += 0.001)));
 				world.RemovePhysicsBody(block);
+				cout << "removing 1" << &block << endl;
 				blocks.QueueRemove(block);
 				score += 10;
 			}
 			};
 	}
+	for (int b(0); b < 15; b++) {
+		PhysicsSprite& block = blocks.Create();
+		block.setTexture(blockTex);
+		int x = 25 + ((700 / 15) * b);
+		Vector2f sz = block.getSize();
+		block.setCenter(Vector2f(x, 100 + (sz.y / 2)));
+		block.setVelocity(Vector2f(0, 0));
+		world.AddPhysicsBody(block);
+		block.setStatic(true); 
+		block.onCollision =
+			[&world, &ball, &block, &blocks, &xSpeed, &ySpeed, &score]
+			(PhysicsBodyCollisionResult result) {
+			if (result.object2 == ball) {
+				//___Sound.play();
+				cout << "block2" << endl;
+				//ball.applyImpulse(Vector2f((ySpeed += 0.001), (xSpeed += 0.001)));
+				world.RemovePhysicsBody(block);
+				cout << "removing 2" << &block << endl;
+				blocks.QueueRemove(block);
+				score += 10;
+			}
+			};
+	}
+	for (int c(0); c < 15; c++) {
+		PhysicsSprite& block = blocks.Create();
+		block.setTexture(blockTex);
+		int x = 50 + ((700 / 15) * c);
+		Vector2f sz = block.getSize();
+		block.setCenter(Vector2f(x, 150 + (sz.y / 2)));
+		block.setVelocity(Vector2f(0, 0));
+		world.AddPhysicsBody(block);
+		block.setStatic(true);
+		block.onCollision =
+			[&world, &ball, &block, &blocks, &xSpeed, &ySpeed, &score]
+			(PhysicsBodyCollisionResult result) {
+			if (result.object2 == ball) {
+				//___Sound.play();
+				cout << "block3" << endl;
+				//ball.applyImpulse(Vector2f((ySpeed += 0.001), (xSpeed += 0.001)));
+				world.RemovePhysicsBody(block);
+				cout << "removing 3 " << &block << endl;
+				blocks.QueueRemove(block);
+				score += 10;
+			}
+			};
+	}
+	
+
 
 	
 	Clock clock;
@@ -140,15 +192,16 @@ int main()
 		currentTime = clock.getElapsedTime();
 		Time deltaTime = (currentTime - lastTime);
 		long deltaTimeMS = deltaTime.asMilliseconds();
-		if (deltaTimeMS > 0.1) {
+		if (deltaTimeMS > 10) {
+			//cout << deltaTimeMS<< " ";
 			lastTime = currentTime;
-			world.UpdatePhysics(deltaTimeMS);
+			world.UpdatePhysics(deltaTimeMS,2);
 			MovePaddle(paddle, deltaTimeMS);
 		}
 		
 		
 		window.clear();
-		blocks.DoRemovals();
+		
 		for (PhysicsShape& block : blocks) {
 			window.draw((PhysicsSprite&)block);
 		}
@@ -164,6 +217,7 @@ int main()
 		window.draw(leftwall);
 		window.draw(ceiling);
 		window.display();
+		blocks.DoRemovals();
 		}
 		
 }
