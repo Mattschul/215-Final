@@ -2,9 +2,11 @@
 //
 
 #include <iostream>
+#include <cstdlib>
 
 #include <SFML/Graphics.hpp>
 #include <SFPhysics.h>
+#include <SFML/Audio.hpp>
 
 using namespace std;
 using namespace sf;
@@ -43,10 +45,38 @@ int main()
 	World world(Vector2f(0,0));
 	int score = 0;
 	Font fnt;
+
 	if (!fnt.loadFromFile("arial.ttf")) {
 		cout << "Couldnt load arial.ttf" << endl;
 		exit(1);
 	}
+	SoundBuffer block1Buffer;
+	if (!block1Buffer.loadFromFile("sounds/boing.ogg")) {
+		cout << "could not load boing.ogg" << endl;
+		exit(5);
+	}
+	SoundBuffer block2Buffer;
+	if (!block2Buffer.loadFromFile("sounds/rope.ogg")) {
+		cout << "could not load rope.ogg" << endl;
+		exit(6);
+	}
+
+	SoundBuffer block3Buffer;
+	if (!block3Buffer.loadFromFile("sounds/ah.ogg")) {
+		cout << "could not load ah.ogg" << endl;
+		exit(7);
+	}
+
+
+		Sound boingSound;
+		boingSound.setBuffer(block1Buffer);
+
+		Sound ropeSound;
+		ropeSound.setBuffer(block2Buffer);
+
+		Sound ahSound;
+		ahSound.setBuffer(block3Buffer);
+
 
 	// Create the ball
 	PhysicsCircle ball;
@@ -119,14 +149,25 @@ int main()
 		world.AddPhysicsBody(block);
 		block.setStatic(true);
 		block.onCollision =
-			[&world, &ball, &block, &blocks, &xSpeed, &ySpeed, &score]
+			[&world, &ball, &block, &blocks, &xSpeed, &ySpeed, &score, &boingSound, &ropeSound, &ahSound]
 			(PhysicsBodyCollisionResult result) {
 			if (result.object2 == ball) {
 				//___Sound.play();
-				cout << "block1" << endl;
 				//ball.applyImpulse(Vector2f((ySpeed += 0.001), (xSpeed += 0.001)));
+				int number = rand() % 3 + 1;
+				if (number == 3) {
+					cout << "three" << endl;
+					boingSound.play();
+				}
+				else if (number == 2) {
+					cout << "two" << endl;
+					ropeSound.play();
+				}
+				else if (number == 1) {
+					cout << "one" << endl;
+					ahSound.play();
+				}
 				world.RemovePhysicsBody(block);
-				cout << "removing 1" << &block << endl;
 				blocks.QueueRemove(block);
 				score += 10;
 			}
@@ -142,14 +183,25 @@ int main()
 		world.AddPhysicsBody(block);
 		block.setStatic(true); 
 		block.onCollision =
-			[&world, &ball, &block, &blocks, &xSpeed, &ySpeed, &score]
+			[&world, &ball, &block, &blocks, &xSpeed, &ySpeed, &score, &boingSound, &ropeSound, &ahSound]
 			(PhysicsBodyCollisionResult result) {
 			if (result.object2 == ball) {
 				//___Sound.play();
-				cout << "block2" << endl;
 				//ball.applyImpulse(Vector2f((ySpeed += 0.001), (xSpeed += 0.001)));
+				int number = rand() % 3 + 1;
+				if (number == 3) {
+					cout << "three" << endl;
+					boingSound.play();
+				}
+				else if (number == 2) {
+					cout << "two" << endl;
+					ropeSound.play();
+				}
+				else if (number == 1) {
+					cout << "one" << endl;
+					ahSound.play();
+				}
 				world.RemovePhysicsBody(block);
-				cout << "removing 2" << &block << endl;
 				blocks.QueueRemove(block);
 				score += 10;
 			}
@@ -165,14 +217,25 @@ int main()
 		world.AddPhysicsBody(block);
 		block.setStatic(true);
 		block.onCollision =
-			[&world, &ball, &block, &blocks, &xSpeed, &ySpeed, &score]
+			[&world, &ball, &block, &blocks, &xSpeed, &ySpeed, &score, &boingSound, &ropeSound, &ahSound]
 			(PhysicsBodyCollisionResult result) {
 			if (result.object2 == ball) {
 				//___Sound.play();
-				cout << "block3" << endl;
 				//ball.applyImpulse(Vector2f((ySpeed += 0.001), (xSpeed += 0.001)));
+				int number = rand() % 3 + 1;
+				if (number == 3) {
+					cout << "three" << endl;
+					boingSound.play();
+				}
+				else if (number == 2) {
+					cout << "two" << endl;
+					ropeSound.play();
+				}
+				else if (number == 1) {
+					cout << "one" << endl;
+					ahSound.play();
+				}
 				world.RemovePhysicsBody(block);
-				cout << "removing 3 " << &block << endl;
 				blocks.QueueRemove(block);
 				score += 10;
 			}
