@@ -12,7 +12,7 @@ using namespace std;
 using namespace sf;
 using namespace sfp;
 
-const float KB_SPEED = 0.6;
+const float KB_SPEED = 0.8;
 void LoadTex(Texture& tex, string filename) {
 	if (!tex.loadFromFile(filename)) {
 		cout << "Could not load" << filename << endl;
@@ -44,6 +44,7 @@ int main()
 	RenderWindow window(VideoMode(800, 600), "Breakout");
 	World world(Vector2f(0,0));
 	int score = 0;
+	int fail = 0;
 	Font fnt;
 
 	if (!fnt.loadFromFile("arial.ttf")) {
@@ -76,23 +77,36 @@ int main()
 
 		Sound ahSound;
 		ahSound.setBuffer(block3Buffer);
+	
+		
+	//random seed set; ensures randomness per game
+	srand(time(0));
 
 
 	// Create the ball
 	PhysicsCircle ball;
 	ball.setCenter(Vector2f(200, 300));
 	ball.setRadius(10);
-	float xSpeed = 0.2;
-	float ySpeed = -0.2;
+	float xSpeed = 0.3;
+	float ySpeed = -0.4;
 	ball.applyImpulse(Vector2f(xSpeed, ySpeed));
 	world.AddPhysicsBody(ball);
 
 	//Create the floor
-	/**PhysicsRectangle floor;
+	PhysicsRectangle floor;
 	floor.setSize(Vector2f(760, 20));
 	floor.setCenter(Vector2f(400, 590));
 	floor.setStatic(true);
-	world.AddPhysicsBody(floor);**/
+	world.AddPhysicsBody(floor);
+
+	//lose condition setup
+	floor.onCollision =
+		[&ball, &world, &floor, &fail]
+		(PhysicsBodyCollisionResult result) {
+		if (result.object2 == ball) {
+			fail += 1;
+		}
+		};
 
 	//Create a wall
 	PhysicsRectangle rightwall;
@@ -128,9 +142,10 @@ int main()
 		[&ball, &xSpeed, &ySpeed, &paddle]
 		(PhysicsBodyCollisionResult result) {
 		if (result.object2 == ball) {
-			cout << "paddle" << endl;
-			//ensure ball keeps moving
-			//ball.setVelocity(Vector2f((ySpeed += 0.01), (xSpeed += 0.01)));
+			//cout << "paddle" << endl;
+			//randomness and increase gameplay speed
+			ball.applyImpulse(Vector2f(((rand() % 3 + 1)*0.01), ((rand() % 3 + 1)*-0.01)));
+
 		}
 		};
 
@@ -152,20 +167,21 @@ int main()
 			[&world, &ball, &block, &blocks, &xSpeed, &ySpeed, &score, &boingSound, &ropeSound, &ahSound]
 			(PhysicsBodyCollisionResult result) {
 			if (result.object2 == ball) {
-				//___Sound.play();
-				//ball.applyImpulse(Vector2f((ySpeed += 0.001), (xSpeed += 0.001)));
 				int number = rand() % 3 + 1;
 				if (number == 3) {
-					cout << "three" << endl;
+					//cout << "three" << endl;
 					boingSound.play();
+					
 				}
 				else if (number == 2) {
-					cout << "two" << endl;
+					//cout << "two" << endl;
 					ropeSound.play();
+					
 				}
 				else if (number == 1) {
-					cout << "one" << endl;
+					//cout << "one" << endl;
 					ahSound.play();
+					
 				}
 				world.RemovePhysicsBody(block);
 				blocks.QueueRemove(block);
@@ -186,20 +202,20 @@ int main()
 			[&world, &ball, &block, &blocks, &xSpeed, &ySpeed, &score, &boingSound, &ropeSound, &ahSound]
 			(PhysicsBodyCollisionResult result) {
 			if (result.object2 == ball) {
-				//___Sound.play();
-				//ball.applyImpulse(Vector2f((ySpeed += 0.001), (xSpeed += 0.001)));
 				int number = rand() % 3 + 1;
 				if (number == 3) {
-					cout << "three" << endl;
+					//cout << "three" << endl;
 					boingSound.play();
 				}
 				else if (number == 2) {
-					cout << "two" << endl;
+					//cout << "two" << endl;
 					ropeSound.play();
+					
 				}
 				else if (number == 1) {
-					cout << "one" << endl;
+					//cout << "one" << endl;
 					ahSound.play();
+					
 				}
 				world.RemovePhysicsBody(block);
 				blocks.QueueRemove(block);
@@ -220,19 +236,18 @@ int main()
 			[&world, &ball, &block, &blocks, &xSpeed, &ySpeed, &score, &boingSound, &ropeSound, &ahSound]
 			(PhysicsBodyCollisionResult result) {
 			if (result.object2 == ball) {
-				//___Sound.play();
-				//ball.applyImpulse(Vector2f((ySpeed += 0.001), (xSpeed += 0.001)));
 				int number = rand() % 3 + 1;
 				if (number == 3) {
-					cout << "three" << endl;
+					//cout << "three" << endl;
 					boingSound.play();
 				}
 				else if (number == 2) {
-					cout << "two" << endl;
+					//cout << "two" << endl;
 					ropeSound.play();
 				}
+
 				else if (number == 1) {
-					cout << "one" << endl;
+					//cout << "one" << endl;
 					ahSound.play();
 				}
 				world.RemovePhysicsBody(block);
@@ -250,7 +265,7 @@ int main()
 	Time currentTime(lastTime);
 
 
-	while (true) {
+	while ((score != 450) && (fail != 1)){
 		// calculate MS since last frame
 		currentTime = clock.getElapsedTime();
 		Time deltaTime = (currentTime - lastTime);
@@ -258,7 +273,7 @@ int main()
 		if (deltaTimeMS > 10) {
 			//cout << deltaTimeMS<< " ";
 			lastTime = currentTime;
-			world.UpdatePhysics(deltaTimeMS,2);
+			world.UpdatePhysics(deltaTimeMS,1);
 			MovePaddle(paddle, deltaTimeMS);
 		}
 		
@@ -281,8 +296,28 @@ int main()
 		window.draw(ceiling);
 		window.display();
 		blocks.DoRemovals();
-		}
-		
+	}
+	window.display();
+	if (fail ==1) {
+		Text failText;
+		failText.setString("YOU ARE A KNOB");
+		failText.setFont(fnt);
+		failText.setPosition(Vector2f(300,300));
+		window.draw(failText);
+		window.display();
+		while (true);
+
+	}
+	if (score == 450) {
+		Text winText;
+		winText.setString("YOU ARE A WINNER");
+		winText.setFont(fnt);
+		winText.setPosition(Vector2f(300, 300));
+		window.draw(winText);
+		window.display();
+		while (true);
+
+	}
 }
 
 // Run program: Ctrl + F5 or Debug > Start Without Debugging menu
